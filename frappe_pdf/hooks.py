@@ -68,7 +68,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "frappe_pdf.install.before_install"
-# after_install = "frappe_pdf.install.after_install"
+after_install = "frappe_pdf.install.after_install"
 
 # Uninstallation
 # ------------
