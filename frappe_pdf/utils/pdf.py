@@ -8,10 +8,9 @@ from frappe.utils import get_url
 URLS_NOT_HTTP_TAG_PATTERN = re.compile(
 	r'(href|src){1}([\s]*=[\s]*[\'"]?)((?!http)[^\'">]+)([\'"]?)'
 )  # href=/assets/...
-URL_NOTATION_PATTERN = re.compile(
+URL_NOT_HTTP_NOTATION_PATTERN = re.compile(
 	r'(:[\s]?url)(\([\'"]?)((?!http)[^\'">]+)([\'"]?\))'
 )  # background-image: url('/assets/...')
-	
 
 def scrub_urls(html: str) -> str:
 	return expand_relative_urls(html)
@@ -22,14 +21,24 @@ def expand_relative_urls(html: str) -> str:
 	url = get_url()
 	if url.endswith("/"):
 		url = url[:-1]
+	
+	URLS_HTTP_TAG_PATTERN = re.compile(
+		r'(href|src)([\s]*=[\s]*[\'"]?)((?:{0})[^\'">]+)([\'"]?)'.format(re.escape(url.replace("https://", "http://")))
+	)  # href='https://...
+	
+	URL_HTTP_NOTATION_PATTERN = re.compile(
+		r'(:[\s]?url)(\([\'"]?)((?:{0})[^\'">]+)([\'"]?\))'.format(re.escape(url.replace("https://", "http://")))
+	)  # background-image: url('/assets/...')	
+
 
 	def _expand_relative_urls(match):
 		to_expand = list(match.groups())
-		
+
 		if not to_expand[2].startswith(("mailto", "data:", "tel:")):
-			if not to_expand[2].startswith("/"):
-				to_expand[2] = "/" + to_expand[2]
-			to_expand.insert(2, url)
+			if not to_expand[2].startswith(url):
+				if not to_expand[2].startswith("/"):
+					to_expand[2] = "/" + to_expand[2]
+				to_expand.insert(2, url)
 		
 		# add session id
 		if frappe.session and frappe.session.sid and hasattr(frappe.local, "request") and len(to_expand) > 2:
@@ -40,8 +49,11 @@ def expand_relative_urls(html: str) -> str:
 
 		return "".join(to_expand)
 
+	html = URLS_HTTP_TAG_PATTERN.sub(_expand_relative_urls, html)
 	html = URLS_NOT_HTTP_TAG_PATTERN.sub(_expand_relative_urls, html)
-	html = URL_NOTATION_PATTERN.sub(_expand_relative_urls, html)
+	html = URL_NOT_HTTP_NOTATION_PATTERN.sub(_expand_relative_urls, html)
+	html = URL_HTTP_NOTATION_PATTERN.sub(_expand_relative_urls, html)
+
 	return html
 
 def get_pdf(html, *a, **b):
