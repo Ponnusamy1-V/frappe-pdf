@@ -10,5 +10,7 @@ def pdf(*args, **kwargs):
             return get_pdf_gc(*args, **kwargs)
         else:
             return get_pdf(*args, **kwargs)
+    else:
+        return get_pdf(*args, **kwargs)
 
 frappe.utils.pdf.get_pdf = pdf
