@@ -2,6 +2,16 @@
 
 `frappe_pdf` is an application built on the Frappe framework, designed specifically for rendering PDF files from HTML utilizing Google Chrome's headless mode. It addresses limitations present in wkhtmltopdf, providing better support for modern CSS features and overcoming various rendering constraints.
 
+**Note**: Specify page size and margins in html to get a expected format.
+
+**example**:
+```sh
+page {
+	size: A4;
+	margin: 5mm;
+}
+```
+
 ## Features
 
 - **Modern CSS Support:** Utilizes Google Chrome's headless mode to overcome limitations present in wkhtmltopdf, supporting the latest CSS features for more accurate rendering of HTML to PDF.
