@@ -31,6 +31,12 @@ Google Chrome's headless mode is preferred due to its robust support for modern 
 	bench --site sitename install-app frappe_pdf
     ```
 4. After installing app on your site, enable the option `Generate PDF using Google Chrome` in `Print Settings`.
+
+## Supported Frappe Versions
+- version-13
+- version-14
+- version-15
+
 #### License
 
 mit
