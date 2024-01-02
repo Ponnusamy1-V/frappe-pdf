@@ -62,8 +62,17 @@ def get_pdf(html, *a, **b):
 	with tempfile.NamedTemporaryFile(mode="w+", suffix=f"{frappe.generate_hash()}.html", delete=True) as html_file:
 		html_file.write(html)
 		html_file.seek(0)
-		chrome_command = f"""google-chrome --headless --disable-gpu --no-pdf-header-footer --run-all-compositor-stages-before-draw  --print-to-pdf='{pdf_file_path}'  {html_file.name} """
-		subprocess.run(chrome_command, shell=True)
+		chrome_command = [
+			"google-chrome",
+			"--headless",
+			"--disable-gpu",
+			"--no-pdf-header-footer",
+			"--run-all-compositor-stages-before-draw",
+			f"--print-to-pdf={pdf_file_path}",
+			html_file.name
+
+		]
+		subprocess.run(chrome_command, shell=False)
 		content = None
 		with open(pdf_file_path, 'rb') as f:
 			content = f.read()
