@@ -66,6 +66,7 @@ def get_pdf(html, *a, **b):
 			"google-chrome",
 			"--headless",
 			"--disable-gpu",
+			"--no-sandbox",
 			"--no-pdf-header-footer",
 			"--run-all-compositor-stages-before-draw",
 			f"--print-to-pdf={pdf_file_path}",
