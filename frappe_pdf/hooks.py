@@ -73,7 +73,7 @@ after_install = "frappe_pdf.install.after_install"
 # Uninstallation
 # ------------
 
-# before_uninstall = "frappe_pdf.uninstall.before_uninstall"
+before_uninstall = "frappe_pdf.install.before_uninstall"
 # after_uninstall = "frappe_pdf.uninstall.after_uninstall"
 
 # Integration Setup
