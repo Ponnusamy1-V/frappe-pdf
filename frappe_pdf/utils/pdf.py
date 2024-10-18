@@ -1,9 +1,11 @@
 import os
+import io
 import re
 import subprocess
 import tempfile
 import frappe
 from frappe.utils import get_url
+from pypdf import PdfReader, PdfWriter
 
 URLS_NOT_HTTP_TAG_PATTERN = re.compile(
     r'(href|src){1}([\s]*=[\s]*[\'"]?)((?!http)[^\'">]+)([\'"]?)'
@@ -66,7 +68,7 @@ def expand_relative_urls(html: str) -> str:
     return html
 
 
-def get_pdf(html, *a, **b):
+def get_pdf(html, options=None, output: PdfWriter | None = None):
     pdf_file_path = f"/tmp/{frappe.generate_hash()}.pdf"
     html = scrub_urls(html)
     with tempfile.NamedTemporaryFile(
@@ -90,4 +92,31 @@ def get_pdf(html, *a, **b):
             content = f.read()
         os.remove(pdf_file_path)
 
-    return content
+    reader = PdfReader(io.BytesIO(content))
+
+    if output:
+        output.append_pages_from_reader(reader)
+        return output
+
+    writer = PdfWriter()
+    writer.append_pages_from_reader(reader)
+
+    if "password" in options:
+        password = options["password"]
+        writer.encrypt(password)
+
+    filedata = get_file_data_from_writer(writer)
+
+    return filedata
+
+
+def get_file_data_from_writer(writer_obj):
+    # https://docs.python.org/3/library/io.html
+    stream = io.BytesIO()
+    writer_obj.write(stream)
+
+    # Change the stream position to start of the stream
+    stream.seek(0)
+
+    # Read up to size bytes from the object and return them
+    return stream.read()
