@@ -74,16 +74,17 @@ def get_pdf(html, options=None, output: PdfWriter | None = None):
     html = scrub_urls(html)
     html, options = prepare_options(html, options)
 
+    additional_style = ""
     if options:
         if options.get("page-height") or options.get("page-width"):
-            html += f"""<style>
+            additional_style += f"""<style>
             @page {{
                 size: {options.get("page-width")}mm {options.get("page-height")}mm;
             }}
             </style>"""
 
         elif options.get("page-size"):
-            html += f"""<style>
+            additional_style += f"""<style>
             @page {{
                 size: {
                     f'''{size.get("width")}in {size.get("height")}in'''
@@ -99,11 +100,13 @@ def get_pdf(html, options=None, output: PdfWriter | None = None):
             or options.get("margin-left")
             or options.get("margin-right")
         ):
-            html += f"""<style>
+            additional_style += f"""<style>
             @page {{
                 {" ".join([f"{key}: {options.get(key)};" for key in ("margin-top", "margin-bottom", "margin-left", "margin-right") if options.get(key)])}
             }}
             </style>"""
+
+    html = additional_style + html
 
     with tempfile.NamedTemporaryFile(
         mode="w+", suffix=f"{frappe.generate_hash()}.html", delete=True
