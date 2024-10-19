@@ -1,8 +1,10 @@
-import os
 import io
+import os
 import re
+import shutil
 import subprocess
 import tempfile
+
 import frappe
 from frappe.utils import get_url
 from frappe.utils.pdf import prepare_options
@@ -114,7 +116,9 @@ def get_pdf(html, options=None, output: PdfWriter | None = None):
         html_file.write(html)
         html_file.seek(0)
         chrome_command = [
-            "google-chrome",
+            "google-chrome"
+            if shutil.which("google-chrome")
+            else "google-chrome-stable",
             "--headless",
             "--disable-gpu",
             "--no-sandbox",
