@@ -1,5 +1,8 @@
+import asyncio
+
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from pyppeteer import launch
 
 
 def get_custom_fields():
@@ -18,6 +21,22 @@ def get_custom_fields():
 def after_install():
     fields = get_custom_fields()
     create_custom_fields(fields)
+    install_pyppeteer_dependencies()
+
+
+def install_pyppeteer_dependencies():
+    async def install():
+        browser = await launch(
+            headless=True, handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False
+        )
+        await browser.close()
+
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
+    return asyncio.get_event_loop().run_until_complete(install())
 
 
 def before_uninstall():
