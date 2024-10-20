@@ -28,7 +28,10 @@ async def _print_to_pdf(html, options):
                 if options.get(key):
                     pdf_options[key] = options.get(key)
 
-        await page.emulateMedia("print")  # to apply @media print styles
+        # to apply @media print styles
+        await page.emulateMedia("print")
+        await asyncio.sleep(0.05)
+
         output = await page.pdf(pdf_options)
         await browser.close()
 
