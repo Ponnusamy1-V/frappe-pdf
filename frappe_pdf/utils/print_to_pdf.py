@@ -17,6 +17,10 @@ async def _print_to_pdf(html, options):
         }
 
         if options:
+
+            options["width"] = options.get("page-width") or options.get("width")
+            options["height"] = options.get("page-height") or options.get("height")
+
             for key in (
                 "width",
                 "height",
