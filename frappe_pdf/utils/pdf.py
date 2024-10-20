@@ -1,13 +1,10 @@
 import io
-import os
 import re
-import shutil
-import subprocess
-import tempfile
 
 import frappe
 from frappe.utils import get_url
 from frappe.utils.pdf import prepare_options
+from frappe_pdf.utils.print_to_pdf import print_to_pdf
 from pypdf import PdfReader, PdfWriter
 
 URLS_NOT_HTTP_TAG_PATTERN = re.compile(
@@ -72,66 +69,15 @@ def expand_relative_urls(html: str) -> str:
 
 
 def get_pdf(html, options=None, output: PdfWriter | None = None):
-    pdf_file_path = f"/tmp/{frappe.generate_hash()}.pdf"
     html = scrub_urls(html)
     html, options = prepare_options(html, options)
 
-    additional_style = ""
-    if options:
-        if options.get("page-height") or options.get("page-width"):
-            additional_style += f"""<style>
-            @page {{
-                size: {options.get("page-width")}mm {options.get("page-height")}mm;
-            }}
-            </style>"""
+    size = get_page_size(options.get("page-size"))
+    if size:
+        options["width"] = size.get("width")
+        options["height"] = size.get("height")
 
-        elif options.get("page-size"):
-            additional_style += f"""<style>
-            @page {{
-                size: {
-                    f'''{size.get("width")}in {size.get("height")}in'''
-                    if (size:=get_page_size(options.get("page-size"))) 
-                    else options.get("page-size")
-                };
-            }}
-            </style>"""
-
-        if (
-            options.get("margin-top")
-            or options.get("margin-bottom")
-            or options.get("margin-left")
-            or options.get("margin-right")
-        ):
-            additional_style += f"""<style>
-            @page {{
-                {" ".join([f"{key}: {options.get(key)};" for key in ("margin-top", "margin-bottom", "margin-left", "margin-right") if options.get(key)])}
-            }}
-            </style>"""
-
-    html = additional_style + html
-
-    with tempfile.NamedTemporaryFile(
-        mode="w+", suffix=f"{frappe.generate_hash()}.html", delete=True
-    ) as html_file:
-        html_file.write(html)
-        html_file.seek(0)
-        chrome_command = [
-            "google-chrome"
-            if shutil.which("google-chrome")
-            else "google-chrome-stable",
-            "--headless",
-            "--disable-gpu",
-            "--no-sandbox",
-            "--no-pdf-header-footer",
-            "--run-all-compositor-stages-before-draw",
-            f"--print-to-pdf={pdf_file_path}",
-            html_file.name,
-        ]
-        subprocess.run(chrome_command, shell=False)
-        content = None
-        with open(pdf_file_path, "rb") as f:
-            content = f.read()
-        os.remove(pdf_file_path)
+    content = print_to_pdf(html, options)
 
     reader = PdfReader(io.BytesIO(content))
 
@@ -165,40 +111,40 @@ def get_file_data_from_writer(writer_obj):
 
 def get_page_size(page_size):
     """
-    paper sizes are in inches
+    returns `width` and `height` for given page size
     """
 
     paper_sizes = {
-        "A0": {"width": 33.1, "height": 46.8},
-        "A1": {"width": 23.4, "height": 33.1},
-        "A2": {"width": 16.5, "height": 23.4},
-        "A3": {"width": 11.7, "height": 16.5},
-        "A4": {"width": 8.3, "height": 11.7},
-        "A5": {"width": 5.8, "height": 8.3},
-        "A6": {"width": 4.1, "height": 5.8},
-        "A7": {"width": 2.9, "height": 4.1},
-        "A8": {"width": 2.0, "height": 2.9},
-        "A9": {"width": 1.5, "height": 2.0},
-        "B0": {"width": 39.4, "height": 55.7},
-        "B1": {"width": 27.8, "height": 39.4},
-        "B2": {"width": 19.7, "height": 27.8},
-        "B3": {"width": 13.9, "height": 19.7},
-        "B4": {"width": 9.8, "height": 13.9},
-        "B5": {"width": 6.9, "height": 9.8},
-        "B6": {"width": 4.9, "height": 6.9},
-        "B7": {"width": 3.5, "height": 4.9},
-        "B8": {"width": 2.4, "height": 3.5},
-        "B9": {"width": 1.7, "height": 2.4},
-        "B10": {"width": 1.2, "height": 1.7},
-        "C5E": {"width": 6.4, "height": 9.0},
-        "Comm10E": {"width": 4.1, "height": 9.5},
-        "DLE": {"width": 4.3, "height": 8.7},
-        "Executive": {"width": 7.25, "height": 10.5},
-        "Folio": {"width": 8.5, "height": 13.0},
-        "Ledger": {"width": 17.0, "height": 11.0},
-        "Legal": {"width": 8.5, "height": 14.0},
-        "Letter": {"width": 8.5, "height": 11.0},
-        "Tabloid": {"width": 11.0, "height": 17.0},
+        "A0": {"width": "33.1in", "height": "46.8in"},
+        "A1": {"width": "23.4in", "height": "33.1in"},
+        "A2": {"width": "16.5in", "height": "23.4in"},
+        "A3": {"width": "11.7in", "height": "16.5in"},
+        "A4": {"width": "8.3in", "height": "11.7in"},
+        "A5": {"width": "5.8in", "height": "8.3in"},
+        "A6": {"width": "4.1in", "height": "5.8in"},
+        "A7": {"width": "2.9in", "height": "4.1in"},
+        "A8": {"width": "2.0in", "height": "2.9in"},
+        "A9": {"width": "1.5in", "height": "2.0in"},
+        "B0": {"width": "39.4in", "height": "55.7in"},
+        "B1": {"width": "27.8in", "height": "39.4in"},
+        "B2": {"width": "19.7in", "height": "27.8in"},
+        "B3": {"width": "13.9in", "height": "19.7in"},
+        "B4": {"width": "9.8in", "height": "13.9in"},
+        "B5": {"width": "6.9in", "height": "9.8in"},
+        "B6": {"width": "4.9in", "height": "6.9in"},
+        "B7": {"width": "3.5in", "height": "4.9in"},
+        "B8": {"width": "2.4in", "height": "3.5in"},
+        "B9": {"width": "1.7in", "height": "2.4in"},
+        "B10": {"width": "1.2in", "height": "1.7in"},
+        "C5E": {"width": "6.4in", "height": "9.0in"},
+        "Comm10E": {"width": "4.1in", "height": "9.5in"},
+        "DLE": {"width": "4.3in", "height": "8.7in"},
+        "Executive": {"width": "7.25in", "height": "10.5in"},
+        "Folio": {"width": "8.5in", "height": "13.0in"},
+        "Ledger": {"width": "17.0in", "height": "11.0in"},
+        "Legal": {"width": "8.5in", "height": "14.0in"},
+        "Letter": {"width": "8.5in", "height": "11.0in"},
+        "Tabloid": {"width": "11.0in", "height": "17.0in"},
     }
 
     return paper_sizes.get(page_size)

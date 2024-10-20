@@ -6,8 +6,8 @@ def get_custom_fields():
     return {
         "Print Settings": [
             {
-                "fieldname": "pdf_using_google_chrome",
-                "label": "Generate PDF using Google Chrome",
+                "fieldname": "pdf_using_chromium",
+                "label": "Generate PDF using Chromium",
                 "fieldtype": "Check",
                 "insert_after": "pdf_page_width",
             }
