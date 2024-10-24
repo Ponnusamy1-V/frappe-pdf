@@ -1,5 +1,7 @@
 import asyncio
+import tempfile
 
+import frappe
 from pyppeteer import launch
 
 
@@ -9,7 +11,14 @@ async def _print_to_pdf(html, options):
     )
     try:
         page = await browser.newPage()
-        await page.setContent(html)
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=f"{frappe.generate_hash()}.html", delete=True
+        ) as html_file:
+            html_file.write(html)
+            html_file.seek(0)
+
+            await page.goto(f"file:///{html_file.name}")
 
         pdf_options = {
             "printBackground": True,
@@ -17,7 +26,6 @@ async def _print_to_pdf(html, options):
         }
 
         if options:
-
             options["width"] = options.get("page-width") or options.get("width")
             options["height"] = options.get("page-height") or options.get("height")
 
