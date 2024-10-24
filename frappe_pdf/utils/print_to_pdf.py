@@ -1,6 +1,5 @@
 import asyncio
 import tempfile
-from concurrent.futures import ProcessPoolExecutor
 
 import frappe
 from pyppeteer import launch
@@ -55,16 +54,10 @@ async def _print_to_pdf(html, options):
         raise e
 
 
-def run_async_process(html, options):
+def print_to_pdf(html, options=None):
     try:
         asyncio.get_event_loop()
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
 
     return asyncio.get_event_loop().run_until_complete(_print_to_pdf(html, options))
-
-
-def print_to_pdf(html, options):
-    with ProcessPoolExecutor() as executor:
-        result = executor.submit(run_async_process, html, options)
-        return result.result()
