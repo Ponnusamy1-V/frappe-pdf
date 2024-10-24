@@ -36,7 +36,10 @@ def install_pyppeteer_dependencies():
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
 
-    return asyncio.get_event_loop().run_until_complete(install())
+    try:
+        asyncio.get_event_loop().run_until_complete(install())
+    except Exception:
+        print("Failed to install pyppeteer dependencies")
 
 
 def before_uninstall():
