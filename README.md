@@ -44,7 +44,7 @@ Google Chrome's headless mode is preferred due to its robust support for modern 
 5. Google Chrome should be installed on the server. (currently working on replacing the manual installation of google-chrome) 
 
 ## Supported Frappe Versions
-- version-13
+- version-13 is not supported as it uses python 2x
 - version-14
 - version-15
 
